@@ -1,13 +1,12 @@
 var xScreenSize = 1200;
-var yScreenSize = 600;
-var xWorldSize = 1200;
+var yScreenSize = 900;
 var cameraX = 0;
+var cameraY = 0;
 var bal;
 var ballen = [];
 
 function setup() {
   createCanvas(xScreenSize, yScreenSize);
-  player1 = new Player(0, 0, 20)
 }
 
 function positive(numb) {
@@ -17,147 +16,71 @@ function positive(numb) {
   return(numb)
 }
 
-function MoveCamera() {
-  if (cameraX < 0){
-    cameraX = 0;
-  } else if (cameraX + xScreenSize > xWorldSize){
-    cameraX = xWorldSize - xScreenSize;
+function biggestBall() {
+  var c = 0;
+  biggestBallA = 0;
+  while (c < ballen.length) {
+    if (ballen[c].radius > ballen[biggestBallA].radius) {
+      biggestBallA = c;
+    }
+    c += 1;
   }
+  return(biggestBallA);
+}
+
+function MoveCamera() {
+  cameraX = ballen[biggestBall()].xPos - (xScreenSize / 2);
+  cameraY = ballen[biggestBall()].yPos - (yScreenSize / 2);
 }
 
 function nieuw() {
-  bal = new Bal(Math.floor((Math.random() * xWorldSize - 20) + 20),100,20,Math.floor((Math.random() * 21) - 10),1,false);
+  bal = new Bal(ballen[biggestBall()].xPos,ballen[biggestBall()].yPos + Math.floor((Math.random() * 400) + 100),2,5,0,false,Math.floor(Math.random() * 255),Math.floor(Math.random() * 255),Math.floor(Math.random() * 255));
   ballen.push(bal);
 }
 
-function Player(X, Y, R) {
-  this.xPos = X;
-  this.yPos = Y;
-  this.radius = R;
-  this.xSpeed = 0;
-  this.ySpeed = 0;
-
-  this.Controls = function() {
-    this.xSpeed += ((this.xPos - cameraX) - mouseX) * -1 / 1000;
-    this.ySpeed += (this.yPos - mouseY) * -1 / 1000;
-    cameraX += ((this.xPos - (xScreenSize / 2)) - cameraX) / 5;
-  }
-
-  this.updateSnelheid = function() {
-    for (var b = 0; b < ballen.length; b++) {
-      if (ballen[b] != this){
-        var dx = ballen[b].xPos - this.xPos;
-        var dy = ballen[b].yPos - this.yPos;
-        if (Math.sqrt(dx*dx + dy*dy) <= this.radius + ballen[b].radius){
-          this.speedSpeed = (positive(dx) + positive(dy)) / 20;
-          if (this.speedSpeed < -1 && this.speedSpeed > 1) {
-            this.xSpeed = Math.floor((Math.random() * 20) + 10);
-            this.ySpeed = Math.floor((Math.random() * 20) + 10);
-          } else {
-            this.xSpeed += ((dx * -1) / this.radius * this.speedSpeed);
-            this.ySpeed += ((dy * -1) / this.radius * this.speedSpeed);
-          }
-        }
-      }
-    }
-    if (this.xPos > xWorldSize - this.radius){
-      this.xSpeed = positive(this.xSpeed * -1) * -1;
-      this.xPos -= 1;
-    }
-    if (this.xPos < this.radius){
-      this.xSpeed = positive(this.xSpeed * -1);
-      this.xPos += 1;
-    }
-    if (this.yPos > yScreenSize - this.radius){
-      this.ySpeed = positive(this.ySpeed * -1) * -1;
-      this.yPos -= 1;
-//    } else {
-//      this.ySpeed += 0.2;
-    }
-    if (this.yPos < this.radius){
-      this.ySpeed = positive(this.ySpeed * -1);
-      this.yPos += 1;
-    }
-    this.xSpeed = this.xSpeed * 0.999;
-    this.ySpeed = this.ySpeed * 0.999;
-  }
-
-  this.beweeg = function() {
-    this.xPos += this.xSpeed;
-    this.yPos += this.ySpeed;
-  }
-
-  this.teken = function() {
-    fill(255);
-    noStroke();
-    ellipse(this.xPos - cameraX, this.yPos, 2*this.radius, 2*this.radius);
-  }
-}
-
-player1 = new Player(0, 0, 20)
-
-function Bal(X, Y, R, XS, YS, FP) {
+function Bal(X, Y, R, XS, YS, FP, RC, GC, BC) {
   this.xPos = X;
   this.yPos = Y;
   this.radius = R;
   this.xSpeed = XS;
   this.ySpeed = YS;
-  this.isFixed = FP
+  this.isFixed = FP;
+  this.red = RC;
+  this.green = GC;
+  this.blue = BC;
 
   this.teken = function() {
-    fill(0);
-    ellipse(this.xPos - cameraX, this.yPos, 2*this.radius, 2*this.radius);
+    fill(this.red, this.green, this.blue);
+    noStroke();
+    ellipse(this.xPos - cameraX, this.yPos - cameraY, 2*this.radius, 2*this.radius);
   }
 
-  this.updateSnelheid = function() {
-    for (var b = 0; b < ballen.length; b++) {
-      if (ballen[b] != this){
-        var dx = ballen[b].xPos - this.xPos;
-        var dy = ballen[b].yPos - this.yPos;
-        if (Math.sqrt(dx*dx + dy*dy) <= this.radius + ballen[b].radius){
-          this.speedSpeed = (positive(dx) + positive(dy)) / 20;
-          if (this.speedSpeed < -1 && this.speedSpeed > 1) {
-            this.xspeed = Math.floor((Math.random() * 20) + 10);
-            this.ySpeed = Math.floor((Math.random() * 20) + 10);
-          } else {
-            this.xSpeed += ((dx * -1) / this.radius * this.speedSpeed);
-            this.ySpeed += ((dy * -1) / this.radius * this.speedSpeed);
+  this.updateSnelheid = function(A) {
+    b = 0;
+    if (Math.sqrt(ballen[biggestBall()].xPos - this.xPos ^ 2 + ballen[biggestBall()].yPos - this.yPos ^ 2) > 10000) {
+      ballen.splice(A, 1);
+    } else {
+      while (b < ballen.length) {
+        if (ballen[b] != this){
+          var dx = ballen[b].xPos - this.xPos;
+          var dy = ballen[b].yPos - this.yPos;
+          if (Math.sqrt(dx*dx + dy*dy) <= this.radius + ballen[b].radius){
+            this.xSpeed = (this.xSpeed + ballen[b].xSpeed) / 2;
+            this.ySpeed = (this.ySpeed + ballen[b].ySpeed) / 2;
+            this.radius += ballen[b].radius;
+            this.red = ((this.red * this.radius) + (ballen[b].red * ballen[b].radius)) / (this.radius + ballen[b].radius);
+            this.green = ((this.green * this.radius) + (ballen[b].green * ballen[b].radius)) / (this.radius + ballen[b].radius);
+            this.blue = ((this.blue * this.radius) + (ballen[b].blue * ballen[b].radius)) / (this.radius + ballen[b].radius);
+            ballen.splice(b, 1);
+//            nieuw();
+          } else if (Math.sqrt(dx*dx + dy*dy) < 1000) {
+            this.xSpeed += dx / (Math.sqrt(dx*dx + dy*dy) / (ballen[b].radius / 100));
+            this.ySpeed += dy / (Math.sqrt(dx*dx + dy*dy) / (ballen[b].radius / 100));
           }
         }
+        b += 1;
       }
     }
-    var dx = player1.xPos - this.xPos;
-    var dy = player1.yPos - this.yPos;
-    if (Math.sqrt(dx*dx + dy*dy) <= this.radius + player1.radius){
-      this.speedSpeed = (positive(dx) + positive(dy)) / 20;
-      if (this.speedSpeed < -1 && this.speedSpeed > 1) {
-        this.xspeed = Math.floor((Math.random() * 20) + 10);
-        this.ySpeed = Math.floor((Math.random() * 20) + 10);
-      } else {
-        this.xSpeed += ((dx * -1) / this.radius * this.speedSpeed);
-        this.ySpeed += ((dy * -1) / this.radius * this.speedSpeed);
-      }
-    }
-    if (this.xPos > xWorldSize - this.radius){
-      this.xSpeed = positive(this.xSpeed * -1) * -1;
-      this.xPos -= 1;
-    }
-    if (this.xPos < this.radius){
-      this.xSpeed = positive(this.xSpeed * -1);
-      this.xPos += 1;
-    }
-    if (this.yPos > yScreenaSize - this.radius){
-      this.ySpeed = positive(this.ySpeed * -1) * -1;
-      this.yPos -= 1;
-//    } else {
-//      this.ySpeed += 0.2;
-    }
-    if (this.yPos < this.radius){
-      this.ySpeed = positive(this.ySpeed * -1);
-      this.yPos += 1;
-    }
-    this.xSpeed = this.xSpeed * 0.999;
-    this.ySpeed = this.ySpeed * 0.999;
   }
 
   this.beweeg = function(){
@@ -168,18 +91,33 @@ function Bal(X, Y, R, XS, YS, FP) {
   }
 }
 
-function draw(){
-  background(200);
-  player1.Controls();
+ballen = [new Bal(0,0,10,0,0,true,255,255,100)]
+
+stars = []
+var a = 0;
+while (a < 1000) {
+  stars += [Math.floor(Math.random() * xScreenSize), Math.floor(Math.random() * yScreenSize)];
+  a += 1;
+}
+
+function draw() {
+  background(0,0,100);
   MoveCamera();
-  for (var a = 0; a < ballen.length; a++) {
-    ballen[a].updateSnelheid();
+  var a = 0;
+  while (a < ballen.length) {
+    ballen[a].updateSnelheid(a);
+    a += 1;
   }
-  player1.updateSnelheid();
-  for (var a = 0; a < ballen.length; a++) {
+  var a = 0;
+  while (a < ballen.length) {
     ballen[a].beweeg();
     ballen[a].teken();
+    a += 1;
   }
-  player1.beweeg();
-  player1.teken();
+  fill(255,255,100);
+  var a = 0;
+  while (a < stars.length) {
+    point(stars[a][0] % xScreenSize, stars[a][1] % yScreenSize);
+    a += 1;
+  }
 }
